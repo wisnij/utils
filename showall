@@ -1,0 +1,49 @@
+#!/usr/bin/perl -p
+
+use Term::ANSIColor;
+use Getopt::Std;
+
+# options:
+#   -e   show line ends with $
+#   -c   show nonprinting characters as ^ escapes (e.g. ^M == \r)
+#   -t   show tabs
+#   -a   -e and -t
+#   -n   no colors
+BEGIN {
+    getopts( 'acent' ) or die;
+    
+    sub hl
+    {
+        my ($str) = @_;
+        return $str if $opt_n;
+        return colored( $str, 'bold red' );
+    }
+
+    sub esc_char
+    {
+        my ($char) = @_;
+        return hl '\e' if $char eq "\e";
+        return hl '\r' if $char eq "\r";
+        return ($opt_t || $opt_a ? hl '\t' : "\t") if $char eq "\t";
+        return hl sprintf '<x%02X>', ord $char;
+    }
+}
+
+# nonprinting control characters (except newline)
+if( $opt_c )
+{
+    s/([\x00-\x09\x0B-\x1F])/hl   '<^' . chr( ord($1)       + 64 ) . '>' /eg;
+    s/([\x80-\x9F])/         hl '<M-^' . chr( ord($1) - 128 + 64 ) . '>' /eg;
+    s/([\xA0-\xFE])/         hl '<M-'  . chr( ord($1) - 128 )      . '>' /eg;
+    
+    # special cases
+    s/\x7F/hl '<^?>'/eg;
+    s/\xFF/hl '<M-^?>'/eg;
+}
+else
+{
+    s/([\x00-\x09\x0B-\x1F\x7F-\x9F\xA0-\xFF])/esc_char( $1 )/eg;
+}
+
+# mark line ends
+s/$/hl '$'/e if $opt_e or $opt_a;

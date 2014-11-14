@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Term::ANSIColor qw/:constants colored/;
+
+sub hl
+{
+    my ($match) = @_;
+    my $code = sprintf '%02X', ord $match;
+    return "<<$code>>" if not -t;
+    return colored( $code, 'bold red' );
+}
+
+
+foreach my $file ( @ARGV )
+{
+    open my $fh, $file or warn( "$0: $file: $!\n" ), next;
+
+    while( defined( my $line = <$fh> ) )
+    {
+        next unless $line =~ s/([\x00-\x08\x0c\x0e-\x1f\x7F-\xff])/hl( $1 )/eg;
+        print "$file:$.:$line";
+    }
+
+    close $fh or warn "$0: $file: $!\n";
+}
