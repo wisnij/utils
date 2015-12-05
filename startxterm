@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Start a terminal (and X if necessary) with a shortcut with this setting:
+#     C:\cygwin\bin\run.exe /usr/bin/bash.exe -l -c /home/jwisniewski/bin/startxterm
+
+lockfile='/tmp/.X0-lock'
+running=0
+if [[ -e $lockfile ]]; then
+    pid=`cat $lockfile`
+    if [[ -e /proc/$pid ]]; then
+        running=$pid
+    else
+        rm -f $lockfile
+    fi
+fi
+
+if [[ $running -eq 0 ]]; then
+    /usr/bin/startx -- :0 -multiwindow -clipboard -silent-dup-error -screen 0 3840 1920 -emulate3buttons
+else
+    /usr/bin/run /usr/bin/urxvt -display :0.0 -e bash -l
+fi
