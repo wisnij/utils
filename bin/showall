@@ -16,7 +16,7 @@ BEGIN {
     {
         my ($str) = @_;
         return $str if $opt_n;
-        return colored( $str, 'bold red' );
+        return colored( $str, 'cyan' );
     }
 
     sub esc_char
@@ -25,7 +25,7 @@ BEGIN {
         return hl '\e' if $char eq "\e";
         return hl '\r' if $char eq "\r";
         return ($opt_t || $opt_a ? hl '\t' : "\t") if $char eq "\t";
-        return hl sprintf '<x%02X>', ord $char;
+        return hl sprintf '<%02X>', ord $char;
     }
 }
 
