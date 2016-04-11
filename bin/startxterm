@@ -15,7 +15,7 @@ if [[ -e $lockfile ]]; then
 fi
 
 if [[ $running -eq 0 ]]; then
-    /usr/bin/startx -- :0 -multiwindow -clipboard -silent-dup-error -screen 0 3840 1920 -emulate3buttons
+    /usr/bin/startxwin -- :0 -multiwindow -clipboard -silent-dup-error -screen 0 3840 1920 -emulate3buttons
 else
     /usr/bin/run /usr/bin/urxvt -display :0.0
 fi
