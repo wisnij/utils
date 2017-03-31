@@ -1,49 +1,68 @@
-#!/usr/bin/perl -p
+#!/usr/bin/perl
+
+use strict;
+use warnings;
 
 use Term::ANSIColor;
-use Getopt::Std;
+use Getopt::Long qw(:config gnu_getopt);
 
-# options:
-#   -e   show line ends with $
-#   -c   show nonprinting characters as ^ escapes (e.g. ^M == \r)
-#   -t   show tabs
-#   -a   -e and -t
-#   -n   no colors
-BEGIN {
-    getopts( 'acent' ) or die;
-    
-    sub hl
+
+my $usage = <<"EOF;";
+Usage: $0 [OPTION]... [FILE]...
+  -e  show line ends with \$
+  -c  show nonprinting characters as ^ escapes (e.g. ^M == \\r)
+  -t  show tabs
+  -a  -e and -t
+EOF;
+
+my ($line_ends, $char_escapes, $show_tabs);
+my $show_color = 1;
+GetOptions(
+    'a|all!'          => sub { $_ = $_[1] for $line_ends, $show_tabs },
+    'c|char-escapes!' => \$char_escapes,
+    'e|line-ends!'    => \$line_ends,
+    't|show-tabs!'    => \$show_tabs,
+    'colors!'         => \$show_color,
+    'help|h|?'        => sub { print $usage; exit },
+) or die "error parsing options\n";
+
+sub hl
+{
+    my ($str) = @_;
+    return $str if not $show_color;
+    return colored( $str, 'cyan' );
+}
+
+sub esc_char
+{
+    my ($char) = @_;
+    return hl '\e' if $char eq "\e";
+    return hl '\r' if $char eq "\r";
+    return ($show_tabs ? hl '\t' : "\t") if $char eq "\t";
+    return hl sprintf '<%02X>', ord $char;
+}
+
+
+while( defined( my $line = <> ) )
+{
+    # nonprinting control characters (except newline)
+    if( $char_escapes )
     {
-        my ($str) = @_;
-        return $str if $opt_n;
-        return colored( $str, 'cyan' );
+        $line =~ s/([\x00-\x09\x0B-\x1F])/hl   '<^' . chr( ord($1)       + 64 ) . '>' /eg;
+        $line =~ s/([\x80-\x9F])/         hl '<M-^' . chr( ord($1) - 128 + 64 ) . '>' /eg;
+        $line =~ s/([\xA0-\xFE])/         hl '<M-'  . chr( ord($1) - 128 )      . '>' /eg;
+
+        # special cases
+        $line =~ s/\x7F/hl '<^?>'/eg;
+        $line =~ s/\xFF/hl '<M-^?>'/eg;
+    }
+    else
+    {
+        $line =~ s/([\x00-\x09\x0B-\x1F\x7F-\xFF])/esc_char( $1 )/eg;
     }
 
-    sub esc_char
-    {
-        my ($char) = @_;
-        return hl '\e' if $char eq "\e";
-        return hl '\r' if $char eq "\r";
-        return ($opt_t || $opt_a ? hl '\t' : "\t") if $char eq "\t";
-        return hl sprintf '<%02X>', ord $char;
-    }
-}
+    # mark line ends
+    $line =~ s/$/hl '$'/e if $line_ends;
 
-# nonprinting control characters (except newline)
-if( $opt_c )
-{
-    s/([\x00-\x09\x0B-\x1F])/hl   '<^' . chr( ord($1)       + 64 ) . '>' /eg;
-    s/([\x80-\x9F])/         hl '<M-^' . chr( ord($1) - 128 + 64 ) . '>' /eg;
-    s/([\xA0-\xFE])/         hl '<M-'  . chr( ord($1) - 128 )      . '>' /eg;
-    
-    # special cases
-    s/\x7F/hl '<^?>'/eg;
-    s/\xFF/hl '<M-^?>'/eg;
+    print $line;
 }
-else
-{
-    s/([\x00-\x09\x0B-\x1F\x7F-\x9F\xA0-\xFF])/esc_char( $1 )/eg;
-}
-
-# mark line ends
-s/$/hl '$'/e if $opt_e or $opt_a;
