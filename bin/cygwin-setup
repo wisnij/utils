@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# Run Cygwin setup utility (downloading it first if missing/updated) with a shortcut with this setting:
+#     C:\cygwin\bin\run.exe /usr/bin/bash.exe -l -c ~/bin/cygwin-setup
+
+set -e
+
+setup_file=setup-x86_64.exe
+setup_dir=/bin
+setup_path=$setup_dir/$setup_file
+
+wget https://cygwin.com/$setup_file -N -P $setup_dir
+chmod 755 $setup_path
+$setup_path &
