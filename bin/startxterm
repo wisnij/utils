@@ -17,5 +17,5 @@ fi
 if [[ $running -eq 0 ]]; then
     /usr/bin/startxwin -- :0 -multiwindow -clipboard -silent-dup-error -screen 0 3840 1920 -emulate3buttons
 else
-    /usr/bin/run /usr/bin/urxvt -display :0.0
+    /usr/bin/run /usr/bin/urxvt --wait -display :0.0
 fi
