@@ -11,4 +11,6 @@ setup_path=$setup_dir/$setup_file
 
 wget https://cygwin.com/$setup_file -N -P $setup_dir
 chmod 755 $setup_path
-$setup_path &
+
+echo "running $setup_path"
+$setup_path --no-desktop
