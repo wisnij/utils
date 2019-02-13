@@ -9,7 +9,7 @@ setup_file=setup-x86_64.exe
 setup_dir=/bin
 setup_path=$setup_dir/$setup_file
 
-wget https://cygwin.com/$setup_file -N -P $setup_dir
+wget http://cygwin.com/$setup_file -N -P $setup_dir
 chmod 755 $setup_path
 
 echo "running $setup_path"
