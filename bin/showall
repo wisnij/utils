@@ -43,6 +43,7 @@ sub esc_char
 }
 
 
+$| = 1;
 while( defined( my $line = <> ) )
 {
     # nonprinting control characters (except newline)
