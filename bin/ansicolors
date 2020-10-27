@@ -76,7 +76,7 @@ for my $red ( 0 .. 5 )
         for my $blue ( 0 .. 5 )
         {
             my $color = 16 + ($red * 36) + ($green * 6) + $blue;
-            printf "\e[48;5;${color}m  ";
+            print "\e[48;5;${color}m  ";
         }
 
         print "$normal ";
@@ -91,4 +91,26 @@ print "\n";
 print "Grayscale ramp: 232-255\n";
 
 print "\e[48;5;${_}m  " for 232 .. 255;
-print "$normal\n";
+print "$normal\n\n";
+
+# true colors (adapted from https://gist.github.com/XVilka/8346728)
+print "True colors: fg \\e[38;2;RRR;GGG;BBBm, bg \\e[48;2;RRR;GGG;BBBm\n";
+my $columns = $ENV{COLUMNS} || 80;
+
+for my $complement (0, 1)
+{
+    for my $col ( 0 .. $columns - 1 )
+    {
+        my $r = 255 - ($col * 255/$columns);
+        my $g = ($col * 510/$columns);
+        my $b = ($col * 255/$columns);
+        $g = 510 - $g if $g > 255;
+
+        $complement and $_ = 255 - $_
+            for $r, $g, $b;
+
+        printf( "\e[48;2;%d;%d;%dm ", $r, $g, $b );
+    }
+
+    print "$normal\n";
+}
