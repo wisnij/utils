@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+use Encode qw(decode);
 use Term::ANSIColor;
 use Getopt::Long qw(:config gnu_getopt);
 
@@ -15,13 +16,15 @@ Usage: $0 [OPTION]... [FILE]...
   -a  -e and -t
 EOF;
 
-my ($line_ends, $char_escapes, $show_tabs);
+my ($char_escapes, $line_ends, $encoding, $show_tabs);
 my $show_color = 1;
 GetOptions(
     'a|all!'          => sub { $_ = $_[1] for $line_ends, $show_tabs },
     'c|char-escapes!' => \$char_escapes,
     'e|line-ends!'    => \$line_ends,
+    'E|encoding=s'    => \$encoding,
     't|show-tabs!'    => \$show_tabs,
+    'u|unicode'      => sub { $encoding = 'UTF-8' },
     'colors!'         => \$show_color,
     'help|h|?'        => sub { print $usage; exit },
 ) or die "error parsing options\n";
@@ -38,14 +41,20 @@ sub esc_char
     my ($char) = @_;
     return hl '\e' if $char eq "\e";
     return hl '\r' if $char eq "\r";
-    return ($show_tabs ? hl '\t' : "\t") if $char eq "\t";
-    return hl sprintf '<%02X>', ord $char;
+    return ($show_tabs ? hl '\t' : $char) if $char eq "\t";
+
+    my $ord = ord $char;
+    my $format = ($ord > 0xff) ? 'U+%04X' : '%02X';
+    return hl sprintf "<$format>", $ord;
 }
 
 
 $| = 1;
 while( defined( my $line = <> ) )
 {
+    $line = decode($encoding, $line)
+        if $encoding;
+
     # nonprinting control characters (except newline)
     if( $char_escapes )
     {
@@ -59,7 +68,7 @@ while( defined( my $line = <> ) )
     }
     else
     {
-        $line =~ s/([\x00-\x09\x0B-\x1F\x7F-\xFF])/esc_char( $1 )/eg;
+        $line =~ s/([^\x0A\x20-\x7E])/esc_char( $1 )/eg;
     }
 
     # mark line ends
