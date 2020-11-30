@@ -1,17 +1,17 @@
 #!/usr/bin/perl
 # cleanup -- remove files which fit a given pattern
-# 
+#
 # Copyright (C) 2007 Jim Wisniewski (wisnij@gmail.com).
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
 # details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -75,7 +75,7 @@ GetOptions
     'R|recursive'   => sub { $maxdepth = -1 },
     't|test'        => \$test,
     'v|verbose+'    => \$verbose,
-    
+
     'help'     => sub { print $HELPMSG; exit },
     'helplong' => sub { exec 'perldoc', $0
                             or die "$PN: couldn't exec perldoc: $!\n" }
@@ -94,7 +94,7 @@ else
 {
     $_->[1] = qr/$_->[1]/ for @rules;
     $mindepth = 0 if $mindepth < 0;
-    
+
     push @ARGV, '.' unless @ARGV;
     cleanup @ARGV;
 }
@@ -119,16 +119,16 @@ sub cleanup( @ )
 sub cleanup_rec( $$ )
 {
     my ($path, $curdepth) = @_;
-    
+
     if( isdir $path )
     {
         return unless $maxdepth < 0 or $maxdepth > $curdepth;
         print "--- $path\n" if $verbose;
-        
+
         opendir my $dir, $path  or warn( "$PN: $path: $!\n" ), return;
         my @entries = grep { $_ ne '.' and $_ ne '..' } readdir $dir;
         closedir $dir;
-        
+
         my ($vol, $dirs, $file) = splitpath $path;
         my $newdirs = catdir( splitdir( $dirs ), $file );
         cleanup_rec catpath( $vol, $newdirs, $_ ), $curdepth + 1 for @entries;
@@ -144,15 +144,15 @@ sub cleanup_rec( $$ )
 sub process( $ )
 {
     my $file = shift;
-    
+
     RULE: for my $pair ( @rules )
     {
         my ($include, $pattern) = @$pair;
         next RULE unless $file =~ $pattern;
-        
+
         if( $include )
         {
-            printf "<<< $file\n";
+            print "<<< $file\n";
             unlink $file or warn "$PN: cannot remove `$file': $!\n"
                 unless $test;
         }
@@ -160,10 +160,10 @@ sub process( $ )
         {
             print "!!! $file\n" if $verbose;
         }
-        
+
         return;
     }
-    
+
     print "--- $file\n" if $verbose > 1;
 }
 
@@ -172,7 +172,7 @@ sub process( $ )
 # are only followed if the dereference option was set.
 sub isdir( $ )
 {
-    my $file = shift;    
+    my $file = shift;
     return (-d $file and ($dereference or not -l $file));
 }
 
