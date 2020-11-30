@@ -1,51 +1,64 @@
-#!/usr/bin/perl
-# adapted from http://stackoverflow.com/questions/1075947/can-i-use-gnu-screen-completely-transparently-automatically
+#!/usr/bin/env python3
+"""Log into a remote machine and start a tmux session named SESSION_NAME.  If a
+session with that name is already running, attach to it instead. Defaults to
+'default' if a name is not specified.
 
-use strict;
-use warnings;
-use Getopt::Long qw(:config bundling require_order);
+"""
+import argparse
+import os
+import subprocess
+import sys
 
-my $usage = "Usage: $0 [OPTION...] HOST [SESSION_NAME] [SSH_OPTION...]\n";
-my $helpmsg = $usage . <<'EOF;';
-Log into a remote machine and start a tmux session named SESSION_NAME.  If a
-session with that name is already running, attach to it.  Defaults to 'default'
-if a name is not specified.
 
-  -l, --list   display the tmux sessions available on the login host
-      --help   display this help and exit
-EOF;
+def parse_args(args=None):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     usage="%(prog)s [OPTION...] HOST [SESSION_NAME] [SSH_OPTION...]",
+                                     formatter_class=argparse.RawTextHelpFormatter)
 
-my $list;
-GetOptions( 'l|list' => \$list,
-            'help'   => sub { print $helpmsg; exit } )
-    or die $usage . "Try `$0 --help' for more information.\n";
+    parser.add_argument(
+        "host",
+        help="the host name to ssh to",
+        metavar="HOST",
+    )
 
-my ($host, $session, @ssh_opts);
-while( @ARGV )
-{
-    my $opt = shift @ARGV;
-    if   ( $opt =~ /^-\w$/ )      { push @ssh_opts, $opt, shift @ARGV }
-    elsif( $opt =~ /^-\w/  )      { push @ssh_opts, $opt }
-    elsif( not defined $host )    { $host = $opt }
-    elsif( not defined $session ) { $session = $opt }
-    else                          { push @ssh_opts, $opt }
-}
+    parser.add_argument(
+        "session",
+        nargs="?",
+        help="the tmux session to connect to or create",
+        metavar="SESSION_NAME",
+    )
 
-die $usage if not defined $host;
-my $optstring = join ' ', @ssh_opts;
+    parser.add_argument(
+        "-l", "--list-sessions",
+        action="store_true",
+        help="display the tmux sessions available on the login host",
+    )
 
-if( $list )
-{
-    my $output = qx(ssh $optstring $host tmux list-sessions 2>&1);
-    print $output;
-    print "$0: $host: no tmux sessions found\n"
-        if $output =~ /failed to connect to server/;
-}
-else
-{
-    my $new_session_name = $session // 'default';
-    my $attach_cmd = 'tmux attach-session';
-    $attach_cmd .= " -t '$session'" if defined $session;
+    return parser.parse_known_args(args)
 
-    system qq(ssh $optstring -t $host "$attach_cmd || tmux new-session -s '$new_session_name'");
-}
+
+def main():
+    opts, ssh_opts = parse_args()
+    ssh_optstring = " ".join(ssh_opts)
+
+    if opts.list_sessions:
+        status, output = subprocess.getstatusoutput(f"ssh {ssh_optstring} {opts.host} 'tmux list-sessions'")
+        print(output)
+        if "error connecting" in output or "no server running" in output:
+            print(f"no tmux sessions found on {opts.host}", file=sys.stderr)
+            return 1
+        return status
+
+    else:
+        new_session_name = opts.session or "default"
+        attach_cmd = "tmux attach-session"
+        if opts.session:
+            attach_cmd += f" -t {opts.session}"
+
+        return os.system(f"""
+            ssh {ssh_optstring} -t {opts.host} "{attach_cmd} || tmux new-session -s '{new_session_name}'"
+        """.strip())
+
+
+if __name__ == "__main__":
+    sys.exit(main())
