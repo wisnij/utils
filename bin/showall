@@ -10,21 +10,26 @@ use Getopt::Long qw(:config gnu_getopt);
 
 my $usage = <<"EOF;";
 Usage: $0 [OPTION]... [FILE]...
-  -e  show line ends with \$
-  -c  show nonprinting characters as ^ escapes (e.g. ^M == \\r)
-  -t  show tabs
-  -a  -e and -t
+Print the contents of the FILE(s) with nonprinting characters escaped
+
+  -c, --[no-]char-escapes  [don't] show nonprinting characters as ^ escapes (e.g. ^M == \\r)
+  -e, --encoding=ENC       use ENC as the input text encoding
+  -L, --no-line-ends       don't show line ends with \$
+  -T, --no-show-tabs       don't show tabs as \\t
+  -u, --unicode            use UTF-8 as the input text encoding
+      --[no-]colors        [don't] highlight control chars with color
 EOF;
 
-my ($char_escapes, $line_ends, $encoding, $show_tabs);
+my ($char_escapes, $encoding);
+my $line_ends = 1;
 my $show_color = 1;
+my $show_tabs = 1;
 GetOptions(
-    'a|all!'          => sub { $_ = $_[1] for $line_ends, $show_tabs },
     'c|char-escapes!' => \$char_escapes,
-    'e|line-ends!'    => \$line_ends,
-    'E|encoding=s'    => \$encoding,
-    't|show-tabs!'    => \$show_tabs,
-    'u|unicode'      => sub { $encoding = 'UTF-8' },
+    'e|encoding=s'    => \$encoding,
+    'L|line-ends!'    => \$line_ends,
+    'T|show-tabs!'    => \$show_tabs,
+    'u|unicode'       => sub { $encoding = 'UTF-8' },
     'colors!'         => \$show_color,
     'help|h|?'        => sub { print $usage; exit },
 ) or die "error parsing options\n";
@@ -72,7 +77,7 @@ while( defined( my $line = <> ) )
     }
 
     # mark line ends
-    $line =~ s/$/hl '$'/e if $line_ends;
+    $line =~ s/$/hl '$'/e;
 
     print $line;
 }
