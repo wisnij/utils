@@ -79,7 +79,7 @@ while( defined( my $line = <> ) )
     }
 
     # mark line ends
-    $line =~ s/$/hl '$'/e;
+    $line =~ s/$/hl '$'/e if $line_ends and $line =~ /\n\Z/;
 
     print $line;
 }
