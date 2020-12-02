@@ -27,8 +27,10 @@ my $show_tabs = 1;
 GetOptions(
     'c|char-escapes!' => \$char_escapes,
     'e|encoding=s'    => \$encoding,
-    'L|line-ends!'    => \$line_ends,
-    'T|show-tabs!'    => \$show_tabs,
+    'L'               => sub { $line_ends = 0 },
+    'line-ends!'      => \$line_ends,
+    'T'               => sub { $show_tabs = 0 },
+    'show-tabs!'      => \$show_tabs,
     'u|unicode'       => sub { $encoding = 'UTF-8' },
     'colors!'         => \$show_color,
     'help|h|?'        => sub { print $usage; exit },
