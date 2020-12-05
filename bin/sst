@@ -11,9 +11,11 @@ import sys
 
 
 def parse_args(args=None):
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     usage="%(prog)s [OPTION...] HOST [SESSION_NAME] [SSH_OPTION...]",
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        usage="%(prog)s [OPTION...] HOST [SESSION_NAME] [SSH_OPTION...]",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
 
     parser.add_argument(
         "host",
