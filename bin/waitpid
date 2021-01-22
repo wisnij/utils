@@ -1,0 +1,14 @@
+#!/bin/bash
+
+pid=$1
+seen=0
+
+while [[ -e /proc/$pid ]]; do
+    sleep 1
+    seen=1
+done
+
+if [[ $seen -eq 0 ]]; then
+    echo "process $pid not found"
+    exit 2
+fi
