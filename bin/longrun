@@ -1,0 +1,60 @@
+#!/bin/bash
+# Run a command and print timing information and ring the bell when it finishes.
+# If running in iTerm, also pop up a notification banner.
+
+play_sound=true
+verbose=false
+
+while getopts 'qv' opt; do
+    case $opt in
+        q) play_sound=false ;;
+        v) verbose=true ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+cmd=$1
+shift
+
+start_date=$(date -Iseconds)
+if $verbose; then
+    gtime=$(which gtime)
+    if [[ -z $gtime ]]; then
+        gtime=$(which time)
+    fi
+    $gtime --verbose $cmd "$@"
+else
+    time $cmd "$@"
+fi
+status=$?
+
+end_date=$(date -Iseconds)
+echo -e "start\t$start_date" >&2
+echo -e "end\t$end_date" >&2
+
+if [[ $TERM_PROGRAM == 'iTerm.app' ]]; then
+    if [[ $status -eq 0 ]]; then
+        sound=default
+        msg="success"
+    else
+        sound=Sosumi
+        msg="failed, status $status"
+    fi
+
+    extra=()
+    if $play_sound; then
+        extra+=(-sound "$sound")
+    fi
+
+    terminal-notifier -title "$cmd" -message "$msg" -activate com.googlecode.iterm2 "${extra[@]}"
+else
+    if $play_sound; then
+        echo -n $'\a'
+        if [[ $status -ne 0 ]]; then
+            sleep .25; echo -n $'\a'
+            sleep .25; echo -n $'\a'
+        fi
+    fi
+fi
+
+exit $status
