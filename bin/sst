@@ -5,9 +5,17 @@ session with that name is already running, attach to it instead. Defaults to
 
 """
 import argparse
+from enum import Enum
 import os
 import subprocess
 import sys
+
+
+CANDIDATE_INIT_FILES = ["~/.config/tmux.conf", "~/.tmux.conf"]
+
+
+class InitFile(Enum):
+    DEFAULT = 'DEFAULT'
 
 
 def parse_args(args=None):
@@ -25,15 +33,23 @@ def parse_args(args=None):
 
     parser.add_argument(
         "session",
-        nargs="?",
         help="the tmux session to connect to or create",
         metavar="SESSION_NAME",
+        nargs="?",
+    )
+
+    parser.add_argument(
+        "-i", "--init-config",
+        help="initialize the remote host's ~/.tmux.conf with the local one",
+        metavar="CONFIG_FILE",
+        nargs="?",
+        const=InitFile.DEFAULT,
     )
 
     parser.add_argument(
         "-l", "--list-sessions",
-        action="store_true",
         help="display the tmux sessions available on the login host",
+        action="store_true",
     )
 
     return parser.parse_known_args(args)
@@ -59,6 +75,9 @@ def list_sessions(opts):
 
 
 def new_session(opts):
+    if opts.init_config:
+        init_config(opts)
+
     new_session_name = opts.session or "default"
     attach_cmd = "tmux attach-session"
     if opts.session:
@@ -67,6 +86,24 @@ def new_session(opts):
     return os.system(f"""
         ssh {ssh_optstring} -t {opts.host} "{attach_cmd} || tmux new-session -s '{new_session_name}'"
     """.strip())
+
+
+def init_config(opts):
+    init_file = None
+
+    if opts.init_config == InitFile.DEFAULT:
+        for candidate_init in CANDIDATE_INIT_FILES:
+            if os.path.exists(candidate_init):
+                init_file = candidate_init
+                break
+        else:
+            print(f"no local tmux init file found", file=sys.stderr)
+    else:
+        init_file = opts.init_config
+
+    if init_file:
+        print(f"Copying {init_file} to {opts.host}", file=sys.stderr)
+        subprocess.run(["scp", init_file, f"{opts.host}:~/.tmux.conf"], check=True)
 
 
 if __name__ == "__main__":
