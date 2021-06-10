@@ -49,10 +49,10 @@ if [[ $TERM_PROGRAM == 'iTerm.app' ]]; then
     terminal-notifier -title "$cmd" -message "$msg" -activate com.googlecode.iterm2 "${extra[@]}"
 else
     if $play_sound; then
-        echo -n $'\a'
+        echo -n $'\a' >&2
         if [[ $status -ne 0 ]]; then
-            sleep .25; echo -n $'\a'
-            sleep .25; echo -n $'\a'
+            sleep .25; echo -n $'\a' >&2
+            sleep .25; echo -n $'\a' >&2
         fi
     fi
 fi
