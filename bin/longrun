@@ -16,7 +16,7 @@ shift $((OPTIND - 1))
 cmd=$1
 shift
 
-start_date=$(date -Iseconds)
+start_date=$(date +'%Y-%m-%d %H:%M:%S %z')
 if $verbose; then
     gtime=$(which gtime)
     if [[ -z $gtime ]]; then
@@ -28,7 +28,7 @@ else
 fi
 status=$?
 
-end_date=$(date -Iseconds)
+end_date=$(date +'%Y-%m-%d %H:%M:%S %z')
 echo -e "start\t$start_date" >&2
 echo -e "end\t$end_date" >&2
 
